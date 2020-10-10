@@ -2,23 +2,61 @@
 title: "Homework 3"
 author: "Chong Li"
 date: "10/10/2020"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(p8105.datasets)
+library(tidyverse)
+library(dplyr)
+
 ```
 
-```{r datasets}
-library(p81o5.datasets)
-```
+
 
 ## Problem 1
 
-You can also embed plots, for example:
+```{r }
+data("instacart")
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+instacart %>%
+  count(aisle) %>%
+  arrange(desc(n))
+```
+```{r}
+instacart %>%
+  count(aisle) %>%
+  filter(n >= 10000) %>%
+  mutate(
+    aisle = factor(aisle),
+    aisle = fct_reorder(aisle,n)
+  ) %>%
+  ggplot(aes(x=aisle,y=n)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+```{r}
+instacart %>%
+  filter(aisle %in% c("baking ingredients","dog food care","packaged vegetables fruits")) %>%
+  group_by(aisle) %>%
+  count(product_name) %>% 
+  mutate(rank = min_rank(desc(n))) %>%
+  filter(rank <= 3) %>%
+  arrange(aisle, rank) 
+```
+```{r}
+instacart %>%
+  filter(product_name %in% c("Pink Lady Apples","Coffee Ice Cream")) %>%
+  group_by(product_name,order_dow) %>%
+  summarize(mean_hour = mean(order_hour_of_day)) %>%
+  pivot_wider(
+    names_from = order_dow,
+    values_from = mean_hour
+  )
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+This dataset contains 1384607 rows and `r ncol(instacart)` columns. Each row represents one observation of order by the user. There are identifiers of the users/orders : user ID, order ID, order date, order hour, product ID, product name. There are also variables that represent the characteristics of the specific orders such as the time of the order, whether the product is reordered, the order number. There are also categories for the products that people order such as isles and departments.
+
+The most popular isles in the dataset are fresh vegetables, fresh fruits and packaged vegetable fruits.
