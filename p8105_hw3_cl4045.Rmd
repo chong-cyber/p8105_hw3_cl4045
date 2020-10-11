@@ -144,5 +144,16 @@ From the graph it is clear to see that the mean max temperature for janurary is 
 From the second graph, we cannot find conclusive data that says there is warming as the max temperature distribution does not seem to shift higher.
 
 ```{r}
+library(hexbin)
+library(patchwork)
+library(ggridges)
+graph1=ggplot(noaa_df,aes(x=tmin, y=tmax)) + 
+  geom_hex(na.rm=TRUE)
 
+graph2=noaa_df %>%
+  filter(snow > 0 & snow < 100) %>%
+  ggplot(aes(x = snow, y = year)) +
+    geom_violin(color="navy")
+
+graph1+graph2
 ```
