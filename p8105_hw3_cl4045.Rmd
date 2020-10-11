@@ -11,7 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(p8105.datasets)
 library(tidyverse)
 library(dplyr)
-
+library(readxl)
+library(lubridate)
 ```
 
 
@@ -44,7 +45,8 @@ instacart %>%
   count(product_name) %>% 
   mutate(rank = min_rank(desc(n))) %>%
   filter(rank <= 3) %>%
-  arrange(aisle, rank) 
+  arrange(aisle, rank)%>%
+  knitr::kable()
 ```
 ```{r}
 instacart %>%
@@ -54,9 +56,45 @@ instacart %>%
   pivot_wider(
     names_from = order_dow,
     values_from = mean_hour
-  )
+  ) %>%
+  knitr::kable()
 ```
 
 This dataset contains 1384607 rows and `r ncol(instacart)` columns. Each row represents one observation of order by the user. There are identifiers of the users/orders : user ID, order ID, order date, order hour, product ID, product name. There are also variables that represent the characteristics of the specific orders such as the time of the order, whether the product is reordered, the order number. There are also categories for the products that people order such as isles and departments.
 
 The most popular isles in the dataset are fresh vegetables, fresh fruits and packaged vegetable fruits.
+
+## Problem 2
+```{r}
+chf_df = read_csv("./accel_data.csv",col_types = cols()) %>%
+  janitor::clean_names() %>%
+  pivot_longer(activity_1:activity_1440,
+               names_to = "minutes",
+               names_prefix = "activity_",
+               values_to = "activity_counts" ) %>%
+  mutate(minutes = as.numeric(minutes)) %>%
+  mutate(activity_counts = as.integer(activity_counts)) %>%
+  mutate(weekday_vs_weekend = ifelse(day %in% c("Monday","Tuesday","Wednesday","Thursday","Friday"),"weekday","weekend"))
+
+chf_df
+
+chf_df2 = chf_df %>%
+  group_by(week,day_id,day,weekday_vs_weekend) %>%
+  summarize(activity_per_day = sum(activity_counts))
+
+chf_df2
+
+ggplot(chf_df2,aes(x=day_id,y=activity_per_day)) + 
+  geom_point(aes(color = day, shape=weekday_vs_weekend))
+
+```
+
+This database summarizes the test subjects with CHF who were admitted to CUMC for activity tracking for 35 days spanning through 5 weeks and 35 days. There are intotal 50400 observations representing 50400 minutes in total tracked. 6 variables overall. The variables cover the week of the trial, day of the trial as well as day of the week. The minute variable depicts the minute number of the day. The activities variable documents amount of activity per minute. Another added variable is whether the day is weekend or a weekday. 
+
+From the plot, it appears that the activity level on weekdays is higher than that of weekends. However, this observation could be wrong as on 2 Saturdays the activity level are exceptionally low - probably due to tracking errors. If that is the case, then it is hard to see that there is a noticeable difference between weekend and weekday, or amongst the days of the week.
+
+```{r}
+ggplot(chf_df,aes(x=minutes,y=activity_counts)) + 
+  geom_point(aes(color = day))
+```
+It is clear from the graph that there is a pattern for activity levels. The first 300 minutes and last 500 minutes of the day showed a reduced activity level. Around 12th hour there is a peak in activity level - which might have been a result from either work commute or evening workouts. Activity peaking hours are different for weekends and weekdays. The data showed that on Sundays the activity level peak just before noon and on Saturdays they peak in the early afternoon.
